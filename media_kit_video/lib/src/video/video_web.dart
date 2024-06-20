@@ -12,6 +12,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
 import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
+import 'package:media_kit_video/src/utils/subscriptions.dart';
 
 import 'package:media_kit_video/src/utils/wakelock.dart';
 
@@ -133,13 +134,12 @@ class Video extends StatefulWidget {
   State<Video> createState() => VideoState();
 }
 
-class VideoState extends State<Video> with WidgetsBindingObserver {
+class VideoState extends State<Video> with WidgetsBindingObserver, SubscriptionsMixin {
   late final _contextNotifier = DisposeSafeNotifier<BuildContext?>(null);
   late ValueNotifier<VideoViewParameters> _videoViewParametersNotifier;
   late bool _disposeNotifiers;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
-  final _subscriptions = <StreamSubscription>[];
   late int? _width = widget.controller.player.state.width;
   late int? _height = widget.controller.player.state.height;
   late bool _visible = (_width ?? 0) > 0 && (_height ?? 0) > 0;
@@ -255,7 +255,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     // --------------------------------------------------
     // Do not show the video frame until width & height are available.
     // Since [ValueNotifier<Rect?>] inside [VideoController] only gets updated by the render loop (i.e. it will not fire when video's width & height are not available etc.), it's important to handle this separately here.
-    _subscriptions.addAll(
+    addAllSubscription(
       [
         widget.controller.player.stream.width.listen(
           (value) {
@@ -286,7 +286,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       if (widget.controller.player.state.playing) {
         _wakelock.enable();
       }
-      _subscriptions.add(
+      addSubscription(
         widget.controller.player.stream.playing.listen(
           (value) {
             if (value) {
@@ -304,9 +304,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _wakelock.disable();
-    for (final subscription in _subscriptions) {
-      subscription.cancel();
-    }
     if (_disposeNotifiers) {
       _videoViewParametersNotifier.dispose();
       _contextNotifier.dispose();
