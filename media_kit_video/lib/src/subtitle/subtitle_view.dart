@@ -68,8 +68,8 @@ class SubtitleViewState extends State<SubtitleView> with SubscriptionsMixin {
     Duration duration = const Duration(milliseconds: 100),
   }) {
     if (this.duration != duration) this.duration = duration;
-    if(this.padding != padding) this.padding = padding;
-    if(mounted) setState(() {});
+    if (this.padding != padding) this.padding = padding;
+    if (mounted) setState(() {});
   }
 
   /// {@macro subtitle_view}
