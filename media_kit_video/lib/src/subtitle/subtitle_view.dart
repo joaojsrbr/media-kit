@@ -3,9 +3,9 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:media_kit_video/src/utils/subscriptions.dart';
 
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
@@ -14,6 +14,7 @@ import 'package:media_kit_video/src/video_controller/video_controller.dart';
 /// ------------
 ///
 /// [SubtitleView] widget is used to display the subtitles on top of the [Video].
+/// {@endtemplate}
 class SubtitleView extends StatefulWidget {
   /// The [VideoController] reference to control this [SubtitleView] output.
   final VideoController controller;
@@ -32,13 +33,10 @@ class SubtitleView extends StatefulWidget {
   SubtitleViewState createState() => SubtitleViewState();
 }
 
-class SubtitleViewState extends State<SubtitleView> {
+class SubtitleViewState extends State<SubtitleView> with SubscriptionsMixin {
   late List<String> subtitle = widget.controller.player.state.subtitle;
   late EdgeInsets padding = widget.configuration.padding;
   late Duration duration = const Duration(milliseconds: 100);
-
-  // The [StreamSubscription] to listen to the subtitle changes.
-  StreamSubscription<List<String>>? subscription;
 
   // The reference width for calculating the visible text scale factor.
   static const kTextScaleFactorReferenceWidth = 1920.0;
@@ -47,18 +45,19 @@ class SubtitleViewState extends State<SubtitleView> {
 
   @override
   void initState() {
-    subscription = widget.controller.player.stream.subtitle.listen((value) {
-      setState(() {
-        subtitle = value;
-      });
-    });
+    addSubscription(widget.controller.player.stream.subtitle.listen((value) {
+      setState(() => subtitle = value);
+    }));
     super.initState();
   }
 
   @override
-  void dispose() {
-    subscription?.cancel();
-    super.dispose();
+  void didUpdateWidget(covariant SubtitleView oldWidget) {
+    
+    if(widget.configuration.padding != oldWidget.configuration.padding){
+      setPadding(widget.configuration.padding);	
+    }
+    super.didUpdateWidget(oldWidget);
   }
 
   /// Sets the padding to be used for the subtitles.
@@ -68,32 +67,26 @@ class SubtitleViewState extends State<SubtitleView> {
     EdgeInsets padding, {
     Duration duration = const Duration(milliseconds: 100),
   }) {
-    if (this.duration != duration) {
-      setState(() {
-        this.duration = duration;
-      });
-    }
-    setState(() {
-      this.padding = padding;
-    });
+    if (this.duration != duration) this.duration = duration;
+    if(this.padding != padding) this.padding = padding;
+    if(mounted) setState(() {});
   }
 
   /// {@macro subtitle_view}
   @override
   Widget build(BuildContext context) {
-    padding = widget.configuration.padding;
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate the visible text scale factor.
-        final textScaleFactor = widget.configuration.textScaleFactor ??
-            MediaQuery.of(context).textScaleFactor *
-                sqrt(
+      final TextScaler textScaler =  MediaQuery.of(context).textScaler
+      ..scale(widget.configuration.textScaleFactor ?? sqrt(
                   ((constraints.maxWidth * constraints.maxHeight) /
                           (kTextScaleFactorReferenceWidth *
                               kTextScaleFactorReferenceHeight))
                       .clamp(0.0, 1.0),
-                );
-        return Material(
+                ));
+
+      return Material(
           color: Colors.transparent,
           child: AnimatedContainer(
             padding: padding,
@@ -106,7 +99,7 @@ class SubtitleViewState extends State<SubtitleView> {
               ].join('\n'),
               style: widget.configuration.style,
               textAlign: widget.configuration.textAlign,
-              textScaleFactor: textScaleFactor,
+              textScaler : textScaler,
             ),
           ),
         );
