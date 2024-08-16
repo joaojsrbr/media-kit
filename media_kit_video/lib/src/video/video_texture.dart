@@ -3,22 +3,20 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:io';
 import 'dart:async';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/services.dart';
-import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
+import 'dart:io';
 
-import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
+import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
-
 import 'package:media_kit_video/src/utils/wakelock.dart';
-import 'package:media_kit_video/src/video_view_parameters.dart';
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
+import 'package:media_kit_video/src/video_view_parameters.dart';
 
 /// {@template video}
 ///
@@ -140,7 +138,25 @@ class Video extends StatefulWidget {
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
   late final _contextNotifier = DisposeSafeNotifier<BuildContext?>(null);
-  late ValueNotifier<VideoViewParameters> _videoViewParametersNotifier;
+
+  late final ValueNotifier<VideoViewParameters> _videoViewParametersNotifier =
+      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+            context,
+          )?.videoViewParametersNotifier ??
+          ValueNotifier<VideoViewParameters>(
+            VideoViewParameters(
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit,
+              fill: widget.fill,
+              alignment: widget.alignment,
+              aspectRatio: widget.aspectRatio,
+              filterQuality: widget.filterQuality,
+              controls: widget.controls,
+              subtitleViewConfiguration: widget.subtitleViewConfiguration,
+            ),
+          );
+
   late bool _disposeNotifiers;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
@@ -177,6 +193,33 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     );
   }
 
+  @override
+  void didUpdateWidget(covariant Video oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final currentParams = _videoViewParametersNotifier.value;
+
+    final newParams = currentParams.copyWith(
+      width: widget.width,
+      height: widget.height,
+      fit: widget.fit,
+      fill: widget.fill,
+      alignment: widget.alignment,
+      aspectRatio: widget.aspectRatio,
+      filterQuality: widget.filterQuality,
+      controls: widget.controls,
+      subtitleViewConfiguration: widget.subtitleViewConfiguration,
+    );
+
+    if (newParams != currentParams) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _videoViewParametersNotifier.value = newParams,
+        debugLabel: 'VideoState.didUpdateWidget',
+      );
+    }
+    super.didUpdateWidget(oldWidget);
+  }
+
   void update({
     double? width,
     double? height,
@@ -204,23 +247,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   @override
   void didChangeDependencies() {
-    _videoViewParametersNotifier =
-        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-              context,
-            )?.videoViewParametersNotifier ??
-            ValueNotifier<VideoViewParameters>(
-              VideoViewParameters(
-                width: widget.width,
-                height: widget.height,
-                fit: widget.fit,
-                fill: widget.fill,
-                alignment: widget.alignment,
-                aspectRatio: widget.aspectRatio,
-                filterQuality: widget.filterQuality,
-                controls: widget.controls,
-                subtitleViewConfiguration: widget.subtitleViewConfiguration,
-              ),
-            );
     _disposeNotifiers =
         media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
               context,
@@ -310,10 +336,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       subscription.cancel();
     }
     if (_disposeNotifiers) {
-        _videoViewParametersNotifier.dispose();
-        _contextNotifier.dispose();
-        VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
-      
+      _videoViewParametersNotifier.dispose();
+      _contextNotifier.dispose();
+      VideoStateInheritedWidgetContextNotifierState.fallback.remove(this);
     }
 
     super.dispose();

@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 /// This file is a part of media_kit (https://github.com/media-kit/media-kit).
 ///
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
@@ -5,8 +6,8 @@
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
 import 'package:media_kit_video/src/video_controller/video_controller.dart';
 
 /// {@template subtitle_view}
@@ -158,4 +159,25 @@ class SubtitleViewConfiguration {
       24.0,
     ),
   });
+
+  @override
+  bool operator ==(covariant SubtitleViewConfiguration other) {
+    if (identical(this, other)) return true;
+  
+    return 
+      other.visible == visible &&
+      other.style == style &&
+      other.textAlign == textAlign &&
+      other.textScaleFactor == textScaleFactor &&
+      other.padding == padding;
+  }
+
+  @override
+  int get hashCode {
+    return visible.hashCode ^
+      style.hashCode ^
+      textAlign.hashCode ^
+      textScaleFactor.hashCode ^
+      padding.hashCode;
+  }
 }
