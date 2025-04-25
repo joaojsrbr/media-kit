@@ -142,8 +142,22 @@ class Video extends StatefulWidget {
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
   late final _contextNotifier = DisposeSafeNotifier<BuildContext?>(null);
-  late ValueNotifier<VideoViewParameters> videoViewParametersNotifier;
-  late bool _disposeNotifiers;
+  late ValueNotifier<VideoViewParameters> videoViewParametersNotifier =
+      ValueNotifier<VideoViewParameters>(
+    VideoViewParameters(
+      width: widget.width,
+      height: widget.height,
+      fit: widget.fit,
+      fill: widget.fill,
+      alignment: widget.alignment,
+      aspectRatio: widget.aspectRatio,
+      filterQuality: widget.filterQuality,
+      controls: widget.controls,
+      subtitleViewConfiguration: widget.subtitleViewConfiguration,
+      focusNode: widget.focusNode,
+    ),
+  );
+  bool _disposeNotifiers = true;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
   final _subscriptions = <StreamSubscription>[];
@@ -204,16 +218,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       subtitleViewConfiguration: subtitleViewConfiguration,
       focusNode: focusNode,
     );
-  }
-
-  @override
-  void didChangeDependencies() {
-    _disposeNotifiers =
-        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-              context,
-            )?.disposeNotifiers ??
-            true;
-    super.didChangeDependencies();
   }
 
   @override
@@ -332,24 +336,20 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
     }
 
     scheduleMicrotask(() {
-      videoViewParametersNotifier =
+      final otherVideoViewParametersNotifier =
+          media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+        context,
+      )?.videoViewParametersNotifier;
+
+      if (otherVideoViewParametersNotifier != null) {
+        videoViewParametersNotifier = otherVideoViewParametersNotifier;
+      }
+
+      _disposeNotifiers =
           media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
                 context,
-              )?.videoViewParametersNotifier ??
-              ValueNotifier<VideoViewParameters>(
-                VideoViewParameters(
-                  width: widget.width,
-                  height: widget.height,
-                  fit: widget.fit,
-                  fill: widget.fill,
-                  alignment: widget.alignment,
-                  aspectRatio: widget.aspectRatio,
-                  filterQuality: widget.filterQuality,
-                  controls: widget.controls,
-                  subtitleViewConfiguration: widget.subtitleViewConfiguration,
-                  focusNode: widget.focusNode,
-                ),
-              );
+              )?.disposeNotifiers ??
+              true;
     });
   }
 
