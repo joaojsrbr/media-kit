@@ -3,21 +3,20 @@
 /// Copyright © 2021 & onwards, Hitesh Kumar Saini <saini123hitesh@gmail.com>.
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
-import 'dart:io';
 import 'dart:async';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/services.dart';
-import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
+import 'dart:io';
 
-import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
     as media_kit_video_controls;
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
+import 'package:media_kit_video/src/subtitle/subtitle_view.dart';
 import 'package:media_kit_video/src/utils/dispose_safe_notifer.dart';
-
 import 'package:media_kit_video/src/utils/wakelock.dart';
-import 'package:media_kit_video/src/video_view_parameters.dart';
-import 'package:media_kit_video/src/video_controller/video_controller.dart';
 import 'package:media_kit_video/src/video_controller/platform_video_controller.dart';
+import 'package:media_kit_video/src/video_controller/video_controller.dart';
+import 'package:media_kit_video/src/video_view_parameters.dart';
 
 /// {@template video}
 ///
@@ -118,7 +117,7 @@ class Video extends StatefulWidget {
 
   /// {@macro video}
   const Video({
-    Key? key,
+    super.key,
     required this.controller,
     this.width,
     this.height,
@@ -135,7 +134,7 @@ class Video extends StatefulWidget {
     this.onEnterFullscreen = defaultEnterNativeFullscreen,
     this.onExitFullscreen = defaultExitNativeFullscreen,
     this.focusNode,
-  }) : super(key: key);
+  });
 
   @override
   State<Video> createState() => VideoState();
@@ -209,24 +208,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
   @override
   void didChangeDependencies() {
-    videoViewParametersNotifier =
-        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-              context,
-            )?.videoViewParametersNotifier ??
-            ValueNotifier<VideoViewParameters>(
-              VideoViewParameters(
-                width: widget.width,
-                height: widget.height,
-                fit: widget.fit,
-                fill: widget.fill,
-                alignment: widget.alignment,
-                aspectRatio: widget.aspectRatio,
-                filterQuality: widget.filterQuality,
-                controls: widget.controls,
-                subtitleViewConfiguration: widget.subtitleViewConfiguration,
-                focusNode: widget.focusNode,
-              ),
-            );
     _disposeNotifiers =
         media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
               context,
@@ -349,6 +330,27 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
         ),
       );
     }
+
+    scheduleMicrotask(() {
+      videoViewParametersNotifier =
+          media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+                context,
+              )?.videoViewParametersNotifier ??
+              ValueNotifier<VideoViewParameters>(
+                VideoViewParameters(
+                  width: widget.width,
+                  height: widget.height,
+                  fit: widget.fit,
+                  fill: widget.fill,
+                  alignment: widget.alignment,
+                  aspectRatio: widget.aspectRatio,
+                  filterQuality: widget.filterQuality,
+                  controls: widget.controls,
+                  subtitleViewConfiguration: widget.subtitleViewConfiguration,
+                  focusNode: widget.focusNode,
+                ),
+              );
+    });
   }
 
   @override
