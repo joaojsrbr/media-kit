@@ -160,11 +160,7 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
               focusNode: widget.focusNode,
             ),
           );
-  late final bool _disposeNotifiers =
-      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-            context,
-          )?.disposeNotifiers ??
-          true;
+  late bool _disposeNotifiers;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
   final _subscriptions = <StreamSubscription>[];
@@ -225,6 +221,16 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
       subtitleViewConfiguration: subtitleViewConfiguration,
       focusNode: focusNode,
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    _disposeNotifiers =
+        media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+              context,
+            )?.disposeNotifiers ??
+            true;
+    super.didChangeDependencies();
   }
 
   @override
