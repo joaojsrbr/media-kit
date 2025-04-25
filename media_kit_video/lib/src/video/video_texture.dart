@@ -142,22 +142,29 @@ class Video extends StatefulWidget {
 
 class VideoState extends State<Video> with WidgetsBindingObserver {
   late final _contextNotifier = DisposeSafeNotifier<BuildContext?>(null);
-  late ValueNotifier<VideoViewParameters> videoViewParametersNotifier =
-      ValueNotifier<VideoViewParameters>(
-    VideoViewParameters(
-      width: widget.width,
-      height: widget.height,
-      fit: widget.fit,
-      fill: widget.fill,
-      alignment: widget.alignment,
-      aspectRatio: widget.aspectRatio,
-      filterQuality: widget.filterQuality,
-      controls: widget.controls,
-      subtitleViewConfiguration: widget.subtitleViewConfiguration,
-      focusNode: widget.focusNode,
-    ),
-  );
-  bool _disposeNotifiers = true;
+  late final ValueNotifier<VideoViewParameters> videoViewParametersNotifier =
+      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+            context,
+          )?.videoViewParametersNotifier ??
+          ValueNotifier<VideoViewParameters>(
+            VideoViewParameters(
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit,
+              fill: widget.fill,
+              alignment: widget.alignment,
+              aspectRatio: widget.aspectRatio,
+              filterQuality: widget.filterQuality,
+              controls: widget.controls,
+              subtitleViewConfiguration: widget.subtitleViewConfiguration,
+              focusNode: widget.focusNode,
+            ),
+          );
+  late final bool _disposeNotifiers =
+      media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
+            context,
+          )?.disposeNotifiers ??
+          true;
   final _subtitleViewKey = GlobalKey<SubtitleViewState>();
   final _wakelock = Wakelock();
   final _subscriptions = <StreamSubscription>[];
@@ -334,23 +341,6 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
         ),
       );
     }
-
-    scheduleMicrotask(() {
-      final otherVideoViewParametersNotifier =
-          media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-        context,
-      )?.videoViewParametersNotifier;
-
-      if (otherVideoViewParametersNotifier != null) {
-        videoViewParametersNotifier = otherVideoViewParametersNotifier;
-      }
-
-      _disposeNotifiers =
-          media_kit_video_controls.VideoStateInheritedWidget.maybeOf(
-                context,
-              )?.disposeNotifiers ??
-              true;
-    });
   }
 
   @override
